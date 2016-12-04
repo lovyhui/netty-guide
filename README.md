@@ -4,27 +4,27 @@
 
 ## 前言
 
-刚接触Netty不久, 翻译了一下官网的Netty上手文档. 文档中如果有什么内容和官方存在歧义的话, 请问[官方文档](https://github.com/netty/netty/wiki/User-guide-for-4.x)为准.
+刚接触Netty不久, 翻译了一下官网的Netty上手文档. 文档中如果有什么内容和官方存在歧义的话, 请以[官方文档](https://github.com/netty/netty/wiki/User-guide-for-4.x)为准.
 
 如果有什么问题的话, 欢迎随时告知我.
 
 ### 问题
 
-如今, 我们使用通用的应用程序或库进行互相通信. 例如, 我们经常使用HTTP客户端库从从Web服务器检索信息; 通过Web服务进行远程过程调用. 可是一个通用协议或者它的实现有时并不能很好的覆盖所有情况, 就像我们不能使用通用协议的HTTP服务进行超大文件传输, 发送邮件, 或者实现像金融信息, 多人游戏等近实时数据交互. 这需要针对特定目的高度优化的协议实现. 比如, 你可以能需要针对基于AJAX的聊天室, 流媒体, 大文件传输进行优化来实现对应的HTTP服务. 另一种不可避免的情况, 你必须处理一个传统的专有协议，以确保与旧系统的互操作性. 这种情况, 在保证原有应用的稳定性和性能的前提下如果快速实现该协议是至关重要的.
+如今, 我们使用通用的应用程序或库进行互相通信. 例如, 我们经常使用HTTP客户端库从Web服务器检索信息; 通过Web服务进行远程过程调用. 可是一个通用协议或者它的实现有时并不能很好的覆盖所有情况, 就像我们不能使用通用协议的HTTP服务进行超大文件传输, 发送邮件, 或者实现像金融信息, 多人游戏等近实时数据交互. 这需要针对特定目的高度优化的协议的实现. 比如, 你可以能需要针对基于AJAX的聊天室, 流媒体, 大文件传输进行优化来实现对应的HTTP服务. 另一种不可避免的情况, 你必须处理一个传统的专有协议，以确保与旧系统的互操作性. 这种情况, 在保证原有应用的稳定性和性能的前提下如果快速实现该协议是至关重要的.
 
 ### 解决方案
 
 Netty是一个致力于提供异步事件驱动的网络应用框架和工具, 以此进行可维护性, 高性能, 高扩展性协议的服务器或客户端的快速开发.
 
-换句话说, Netty是一个NIO客户端服务器框架, 使网络应用的开发变得更加快速和简单, 例如协议服务器和客户端. 它极大的简化了网络变成, 例如: TCP/UDP套接字服务器开发.
+换句话说, Netty是一个NIO客户端服务器框架, 使网络应用的开发变得更加快速和简单, 例如协议服务器和客户端. 它极大的简化了网络编程, 例如: TCP/UDP套接字服务器开发.
 
-'快速和简单'并不意味着会牺牲最后应用程序的可维护性和性能. Netty的设计借鉴了大量传统协议的经验, 比如: FTP, SMTP, HTTP, 各种二进制和基于文本的协议. 因此, Netty成功找出了一种开发简单并兼顾性能, 稳定性和灵活性的方式.
+"快速和简单"并不意味着会牺牲其应用程序的可维护性和性能. Netty的设计借鉴了大量传统协议的经验, 比如: FTP, SMTP, HTTP, 各种二进制和基于文本的协议. 因此, Netty成功找出了一种开发简单并兼顾性能, 稳定性和灵活性的方式.
 
 一些人可能已经发现, 其它的网络框架也声称具有同样的优势. 你可能会问, Netty和它们究竟有什么不同. 答案是以哲学为基础的: 从使用的第一天开始, Netty在API和实现上就会给你最舒适的体验. 这虽然是无法具体描述的, 但是当你读这篇指导并开始使用Netty时, 你会慢慢意识到这种哲学使你的生活更加简单.
 
 ## 快速开始
 
-这章主要讲述Netty的核心构建, 通过简单的样例让你快速上手. 当本章结束时, 你便可以以Netty为基础写一个客户端和服务器.
+本章主要讲述Netty的核心构建, 通过简单的样例让你快速上手. 当本章结束时, 你便可以以Netty为基础写一个客户端和服务器.
 
 如果你喜欢自上而下的学习, 那你应该从第2章[构建概述]开始, 然后再回到这里.
 
@@ -39,16 +39,12 @@ Netty是一个致力于提供异步事件驱动的网络应用框架和工具, �
 为了实现`DISCARD`协议, 你唯一要做的就是忽略所有收到的数据. 我们直接从`Handler`的实现开始, 它负责处理Netty生成的I/O事件.
 
 ```java
-package io.netty.example.discard;
+package com.lovyhui.example.discard;
 
 import io.netty.buffer.ByteBuf;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-/**
- * Handles a server-side channel.
- */
 public class DiscardServerHandler extends ChannelInboundHandlerAdapter { // (1)
 
     @Override
@@ -66,9 +62,9 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter { // (1)
 }
 ```
 
-1. `DiscardServerHandler`继承[ChannelInboundHandlerAdapter](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandlerAdapter.html), [ChannelInboundHandlerAdapter](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandlerAdapter.html)是[ChannelInboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandler.html)的实现, [ChannelInboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandler.html)提供了很多事件处理方法, 你可以继承并重写它们. 但这个例子里, 直接继承就足够了.
-2. 这里我们重写事件处理方法`channelRead()`. 无论什么时候从客户端接收到新数据, 这个方法都会被调用. 这里接收数据的类型是[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html)
-3. 为了实现`DISCARD`协议, 处理器必须忽略所有接收到的数据. [ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html)是一个引用计数对象, 必须通过`release()`方法来明确释放. **请注意: 释放每一个传递进来的引用技术对象是每个`Handler`的职责.** 通常, `channelRead()`方法的实现类似下面这样:
+1. `DiscardServerHandler`继承并实现了[ChannelInboundHandlerAdapter](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandlerAdapter.html), [ChannelInboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandler.html)提供了很多事件处理方法, 你可以继承并重写它们. 但这个例子里, 直接继承就足够了.
+2. 这里我们重写事件处理方法`channelRead()`. 无论什么时候服务器从客户端接收到新数据, 这个方法都会被调用. 这里接收数据的类型是[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html)
+3. 为了实现`DISCARD`协议, 处理器必须忽略所有接收到的数据. [ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html)是一个引用计数对象, 必须通过`release()`方法来明确释放. **请注意: 释放每一个传递进来的引用计数对象是每个`Handler`的职责.** 通常, `channelRead()`方法的实现类似下面这样:
 
 	```java
 	@Override
@@ -80,15 +76,14 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter { // (1)
 	    }
 	}
 	```
-4. 当有异常抛出时, `exceptionCaught()`事件处理函数会被调用. 抛出的异常可能是因为Netty因为I/O错误而抛出, 也可能是因为处理器处理事件而抛出. 在大多数情况下, 这里被捕获的异常应该被记录下来, 同时跟它相关的频道都应该被关闭, 但是该方法的具体实现根据你的具体业务场景而有所不同, 例如: 你可能希望在关闭连接之前返回一个错误码响应.
+4. 当有异常抛出时, `exceptionCaught()`事件处理函数会被调用. 抛出异常的原因可能是Netty处理I/O错误, 也可能是处理器处理事件异常. 在大多数情况下, 这里被捕获的异常应该被记录下来, 同时跟它相关的频道都应该被关闭, 但是该方法的具体实现根据你的具体业务场景而有所不同, 例如: 你可能希望在关闭连接之前返回一个错误码响应.
 
 到目前为止, 一切都还不错. 我们实现了`DISCARD`服务器的前一半. 剩下的是写一个`main()`方法并使用`DiscardServerHandler`启动服务器.
 
 ```java
-package io.netty.example.discard;
+package com.lovyhui.example.discard;
 
 import io.netty.bootstrap.ServerBootstrap;
-
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -97,9 +92,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-/**
- * Discards any incoming data.
- */
 public class DiscardServer {
 
     private int port;
@@ -114,15 +106,15 @@ public class DiscardServer {
         try {
             ServerBootstrap b = new ServerBootstrap(); // (2)
             b.group(bossGroup, workerGroup)
-             .channel(NioServerSocketChannel.class) // (3)
-             .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
-                 @Override
-                 public void initChannel(SocketChannel ch) throws Exception {
-                     ch.pipeline().addLast(new DiscardServerHandler());
-                 }
-             })
-             .option(ChannelOption.SO_BACKLOG, 128)          // (5)
-             .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
+                .channel(NioServerSocketChannel.class) // (3)
+                .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
+                    @Override
+                    public void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new DiscardServerHandler());
+                    }
+                })
+                .option(ChannelOption.SO_BACKLOG, 128)          // (5)
+                .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
 
             // Bind and start to accept incoming connections.
             ChannelFuture f = b.bind(port).sync(); // (7)
@@ -149,8 +141,8 @@ public class DiscardServer {
 }
 ```
 
-1. [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html)是一个处理I/O操作的多线程事件循环. Netty针对不同的传输提供各种不同的[EventLoopGroup](EventLoopGroup). 在本例中, 我们实现一个服务端应用, 因此使用两个[NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html). 第一个我们通常称之为'boss', 它用来接收传入的连接. 第二个通常称之为'worker', 当一个连接被'boss'接收并将其注册到'worker'之后, 'worker'就会处理来自该连接的流量. 使用多少线程以及如何将其映射到已创建的[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)取决于[EventLoopGroup](http://netty.io/4.0/api/io/netty/channel/EventLoopGroup.html)的实现, 甚至可以通过构造函数来配置.
-2. [ServerBootstrap](http://netty.io/4.0/api/io/netty/bootstrap/ServerBootstrap.html)是一个创建服务器的辅助类. 你也可以通过使用[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)取决于[EventLoopGroup](http://netty.io/4.0/api/io/netty/channel/EventLoopGroup.html)直接创建服务器, 但这是一个很无聊的过程, 大多数情况下你也无须这么做.
+1. [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html)是一个处理I/O操作的多线程事件循环. Netty针对不同的传输提供各种不同的[EventLoopGroup](EventLoopGroup). 在本例中, 我们实现一个服务端应用, 因此使用两个[NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html). 第一个我们通常称之为"boss", 它用来接收传入的连接. 第二个通常称之为"worker", 当一个连接被"boss"接收并将其注册到"worker"之后, "worker"就会处理来自该连接的流量. 使用多少线程以及如何将其映射到已创建的[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)取决于[EventLoopGroup](http://netty.io/4.0/api/io/netty/channel/EventLoopGroup.html)的实现, 你甚至可以通过构造函数来配置.
+2. [ServerBootstrap](http://netty.io/4.0/api/io/netty/bootstrap/ServerBootstrap.html)是一个创建服务器的辅助类. 你也可以直接使用[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)创建服务器, 但这是一个很无聊的过程, 大多数情况下你也无须这么做.
 3. 本例中我们指定使用[NioServerSocketChannel](http://netty.io/4.0/api/io/netty/channel/socket/nio/NioServerSocketChannel.html)来实例化一个新的[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)并用来接收传入的连接.
 4. 这里指定的处理器**总是**会被一个新传入的[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)重新*初始化*[注: 这里的初始化可能并不准确, 但是想不到更好的描述语言]. [ChannelInitializer](http://netty.io/4.0/api/io/netty/channel/ChannelInitializer.html)是一个特殊的处理器, 用于帮助用户配置一个新的[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html). 你很可能需要添加一些处理器来配置这个新[channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)的[ChannelPipeline](http://netty.io/4.0/api/io/netty/channel/ChannelPipeline.html), 并以此来实现你的网络应用, 比如我们上面所定义的`DiscardServerHandler`. 随着应用程序逐渐复杂, 你可以需要往管道上添加更多的处理器, 以致最终这个抽象类被作为一个独立的顶层类提取出来.
 5. 对于具体`Channel`的实现, 你也可以指定一些参数. 我们正在写一个TCP/IP服务器, 所以我们可以设置一些socket选项, 例如: `tcpNoDelay`和`keepAlive`. 关于支持的配置列表可以参考[ChannelOption](http://netty.io/4.0/api/io/netty/channel/ChannelOption.html)的api文档和具体[ChannelConfig](http://netty.io/4.0/api/io/netty/channel/ChannelConfig.html)的实现.
@@ -163,9 +155,9 @@ public class DiscardServer {
 
 现在, 我们已经写好了第一个服务, 我们需要测试一下它是否真的正常工作. 最简单的方法是使用`telnet`命令. 例如, 你可以在命令行输入`telnet localhost 8080`并输入一些东西.
 
-可是这就能正面服务正常工作吗? 因为它是一个`DISCARD`服务, 所以我们并不能真的知道. 为了证明它真的在工作, 我们修改一下服务, 把它接收的数据打印出来.
+可是这就能证明服务正常工作吗? 因为它是一个`DISCARD`服务, 所以我们并不能真的知道. 为了证明它真的在工作, 我们修改一下服务, 把它接收的数据打印出来.
 
-我们已经知道, 无论什么时候收到数据, `channelRead()`都会被调用. 让我们在`DiscardServerHandler`的`channelRead()`方法里加一些代码.
+我们已经知道, 无论什么时候服务器接收到数据, `channelRead()`都会被调用. 让我们在`DiscardServerHandler`的`channelRead()`方法里加一些代码.
 
 ```java
 @Override
@@ -183,7 +175,7 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 ```
 
 1. 这个效率低下的循环实际可以简化成如下代码:
-	`System.out.println(in.toString(io.netty.util.Charset	Util.US_ASCII))`
+	`System.out.println(in.toString(io.netty.util.CharsetUtil.US_ASCII));`
 2. 另外, 你可以在这里进行`release()`操作.
 
 如果再次你执行`telnet`, 你会发现服务器打印出了它所接收到的数据.
