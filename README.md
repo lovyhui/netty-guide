@@ -194,7 +194,7 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 }
 ```
 
-1. [ChannelHandlerContext](http://netty.io/4.0/api/io/netty/channel/ChannelHandlerContext.html)提供很多操作使你能够触发各种各样的I/O事件和操作. 这里我们调用`invoke(Object)`把收到的数据逐字逐句写下来. **注意: 我们并没有想`DISCARD`服务那样释放接收到的数据, 因为当它被写出到wire中时Netty会自动为你释放它**
+1. [ChannelHandlerContext](http://netty.io/4.0/api/io/netty/channel/ChannelHandlerContext.html)提供很多操作使你能够触发各种各样的I/O事件和操作. 这里我们调用`write(Object)`把收到的数据逐字逐句写下来. **注意: 我们并没有想`DISCARD`服务那样释放接收到的数据, 因为当它被写出到wire中时Netty会自动为你释放它**
 2. `ctx.write(Object)`并没有让这个消息写出到wire, 而是将其进行内部缓冲, 然后当调用`ctx.flush()`才真正将其写到到wire中. 另外你可以直接调用`ctx.writeAndFlush(msg)`来简化操作.
 
 如果你再次执行`telnet`命令, 你会发现无论你输入什么服务器都会原样返回.
