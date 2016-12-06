@@ -206,7 +206,13 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 因为我们打算忽略所有接收到的数据, 同时一旦建立连接就发送一个消息, 所以我们这次不能使用`channelRead()`方法, 而是应该重写`channelActive()`方法. 下面是该方法的实现:
 
 ```java
-package io.netty.example.time;
+package com.lovyhui.example.time;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 public class TimeServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -217,7 +223,6 @@ public class TimeServerHandler extends ChannelInboundHandlerAdapter {
 
         final ChannelFuture f = ctx.writeAndFlush(time); // (3)
         f.addListener(new ChannelFutureListener() {
-            @Override
             public void operationComplete(ChannelFuture future) {
                 assert f == future;
                 ctx.close();
@@ -233,7 +238,7 @@ public class TimeServerHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-1. 正如上面所解释的, 当连接建立并准备产生流量时会调用`channelActive()`方法. 让我们在这个方法里写一个代表当前时间的32位整数.
+1. 正如上面所解释的, 当连接建立并准备产生流量时会调用`channelActive()`方法. 我们在这个方法里写一个代表当前时间的32位整数.
 2. 为了发送一条新消息, 我们需要申请一个新的缓冲区用来存储待发送的消息. 我们打算写一个32位的整数, 所以我们需要一个容量至少4个字节的[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html). 可以通过`ChannelHandlerContext.alloc()`获取当前[ByteBufAllocator](http://netty.io/4.0/api/io/netty/buffer/ByteBufAllocator.html)并申请一个新的缓冲区.
 3. 像往常一样, 我们发送这条消息. 
 	
@@ -268,17 +273,26 @@ $ rdate -o <port> -p <host>
 
 ### 写一个Time客户端
 
-不像`DISCARD`和`TIME`服务, 我们需要为`TIME`协议写一个客户端, 因为我们无法把32位二进制数据转化为成日历中可识别的日期. 本部分我们学习如何确保服务正常工作以及如何使用Netty写一个客户端.
+不像`DISCARD`和`TIME`服务, 我们需要为`TIME`协议写一个客户端, 因为我们无法把32位二进制数据转化为成日历中可识别的日期. 本部分我们学习如何确认服务正常工作以及如何使用Netty写一个客户端.
 
 在Netty中, 客户端和服务器最大的也是仅有的不同是所实现的[Bootstrap](http://netty.io/4.0/api/io/netty/bootstrap/Bootstrap.html)和[Channel](http://netty.io/4.0/api/io/netty/channel/Channel.html)的不同. 如下代码:
 
 ```java
-package io.netty.example.time;
+package com.lovyhui.example.time;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 public class TimeClient {
     public static void main(String[] args) throws Exception {
-        String host = args[0];
-        int port = Integer.parseInt(args[1]);
+        String host = "localhost";
+        int port = 8080;
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         try {
@@ -306,7 +320,7 @@ public class TimeClient {
 ```
 
 1. [Bootstrap](http://netty.io/4.0/api/io/netty/bootstrap/Bootstrap.html)和[ServerBootstrap](http://netty.io/4.0/api/io/netty/bootstrap/Bootstrap.html)很类似. 区别在于[Bootstrap](http://netty.io/4.0/api/io/netty/bootstrap/Bootstrap.html)是为非服务器频道服务的, 例如: 客户端频道和无连接频道.
-2. 如果你仅指定一个[EventLoopGroup](http://netty.io/4.0/api/io/netty/channel/EventLoopGroup.html), 它会同时被用作boos组和worker组. The boss worker is not used for the client side though.
+2. 虽然"boos"组不用在客户端, 但是当你仅指定一个[EventLoopGroup](http://netty.io/4.0/api/io/netty/channel/EventLoopGroup.html), 它会同时被用作boos组和worker组.
 3. 客户使用[NioSocketChannel](http://netty.io/4.0/api/io/netty/channel/socket/nio/NioSocketChannel.html)来创建一个[Channel](http://netty.io/4.0/api/io/netty/channel/Channel.html), 而不是使用[NioServerSocketChannel](http://netty.io/4.0/api/io/netty/channel/socket/nio/NioServerSocketChannel.html).
 4. 注意: 这里我们并不像在`ServerBootstrap`中那样使用`childOption()`, 因为客户端`SocketChannel`并没有*父亲*.
 5. 我们应该调用`connect()`方法, 而不是`bind()`方法.
@@ -314,7 +328,11 @@ public class TimeClient {
 正如你所见, 上面的代码和服务端代码并没有什么实质性的不同. 那[ChannelHandler](http://netty.io/4.0/api/io/netty/channel/ChannelHandler.html)的实现呢? 它应该从服务器接收一个32位的整数, 并将其转换成我们可读的格式, 然后打印出来, 最后关闭连接. 如下代码:
 
 ```java
-package io.netty.example.time;
+package com.lovyhui.example.time;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.Date;
 
@@ -351,15 +369,15 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
 因此, 不能保证你所读到的就是你的远程peer所写的.
 例如, 我们假设一个操作系统的TCP/IP栈收到下面三个包:
 
-![](https://github.com/lovyhui/netty-guide/blob/master/stream-data-1.png)
+![](https://raw.githubusercontent.com/lovyhui/netty-guide/master/stream-data-1.png)
 
 由于流传输协议的通用属性, 很大可能你的应用程序会按照下面的零散形式读到它们.
 
-![](https://github.com/lovyhui/netty-guide/blob/master/stream-data-2.png)
+![](https://raw.githubusercontent.com/lovyhui/netty-guide/master/stream-data-2.png)
 
 因此, 对于接收端, 不管是服务端还是客户端, 都应该对接收到的数据进行碎片整理, 将其整理成一个或多个有意义且容易被应用程序所理解的帧. 对于上面所说的情况, 接收到的数据应该被整理成下面这样:
 
-![](https://github.com/lovyhui/netty-guide/blob/master/stream-data-1.png)
+![](https://raw.githubusercontent.com/lovyhui/netty-guide/master/stream-data-1.png)
 
 ### 第一种解决方法
 
@@ -369,7 +387,11 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
 
 
 ```java
-package io.netty.example.time;
+package com.lovyhui.example.timeplus;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.Date;
 
@@ -414,7 +436,7 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
 
 ### 第二种解决方法
 
-虽然方法一解决了`TIME`客户端的问题, 但是修改后的代码看起来很不简洁. 想象一个更复杂的协议: 它由多个字段组成, 例如: 变长度字段. 那么, 你的[ChannelInboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandler.html)会很快变得不可维护.
+虽然方法一解决了`TIME`客户端的问题, 但是修改后的代码看起来很不简洁. 想象一个更复杂的协议: 它由多个字段组成, 例如: 一个变长度的字段. 那么, 你的[ChannelInboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelInboundHandler.html)会很快变得不可维护.
 
 你可能已经注意到了, 你可以向一个[ChannelPipeline](http://netty.io/4.0/api/io/netty/channel/ChannelPipeline.html)中添加多个[ChannelHandler](http://netty.io/4.0/api/io/netty/channel/ChannelHandler.html). 因此, 你可以将单片[ChannelHandler](http://netty.io/4.0/api/io/netty/channel/ChannelHandler.html)切分成多个, 进行模块化操作, 以此来降低你的应用程序的复杂度. 例如你可以把`TimeClientHandler`切分成两个处理器:
 
@@ -476,7 +498,7 @@ public class TimeDecoder extends ReplayingDecoder<Void> {
 
 目前我们校验过的所有样例都是使用[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html)作为一个协议消息的主要数据存储结构. 本部分, 我们将使用POJO代替[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html)来升级`TIME`协议的客户端和服务器.
 
-在[ChannleHandler](http://netty.io/4.0/api/io/netty/channel/ChannelHandler.html)中使用POJO的优势很明显: 通过分离从处理器的`ByteBuf`中提取信息的代码, 会使你的代码会变得更容易维护和复用. 在`TIME`的客户端和服务器的例子中, 我们仅仅读取一个32位的整数, 并且直接使用`ByteBuf`也不会有什么大问题. 但是当你实现一个工作中的实际协议时, 你会发现分离提取信息的代码是必须的.
+在[ChannleHandler](http://netty.io/4.0/api/io/netty/channel/ChannelHandler.html)中使用POJO的优势很明显: 通过分离从处理器的`ByteBuf`中提取信息的代码, 会使你的代码会变得更容易维护和复用. 在`TIME`的客户端和服务器的例子中, 我们仅仅读取一个32位的整数, 因此直接使用`ByteBuf`也不会有什么大问题. 但是当你实现一个工作中的实际协议时, 你会发现分离提取信息的代码是必须的.
 
 首先, 我们定义一个新的`UnixTime`类型:
 
@@ -543,7 +565,7 @@ public void channelActive(ChannelHandlerContext ctx) {
 }
 ```
 
-现在唯一剩下的是解码器, 它需要实现[ChannelOutboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelOutboundHandler.html), 并负责将`UnixTime`转换回[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html). 这笔编写解码器简单的多, 因为编码信息的时候无须考虑包的碎片化和组装的问题.
+现在唯一剩下的是编码器, 它需要实现[ChannelOutboundHandler](http://netty.io/4.0/api/io/netty/channel/ChannelOutboundHandler.html), 并负责将`UnixTime`转换回[ByteBuf](http://netty.io/4.0/api/io/netty/buffer/ByteBuf.html). 这比编写解码器简单的多, 因为编码信息的时候无须考虑包的碎片化和组装的问题.
 
 ```java
 package io.netty.example.time;
@@ -563,7 +585,7 @@ public class TimeEncoder extends ChannelOutboundHandlerAdapter {
 
 	首先, 我们原样将[ChannelPromise](http://netty.io/4.0/api/io/netty/channel/ChannelPromise.html)传递过去, 当编码数据真正被写到wire中时, Netty会把它标记为成功或失败.
 	
-	其次, 我们并没有调用`ctx.flush()`. 有一个单独的处理器方法`void flush(ChannelHandlerContext ctx)`, 它的目的是重写`flush()`操作.
+	其次, 我们并没有调用`ctx.flush()`. 有一个单独的处理器方法`void flush(ChannelHandlerContext ctx)`去重写`flush()`操作.
 	
 为了进一步简化操作, 你可以使用[MessageToByteEncoder](http://netty.io/4.0/api/io/netty/handler/codec/MessageToByteEncoder.html):
 
